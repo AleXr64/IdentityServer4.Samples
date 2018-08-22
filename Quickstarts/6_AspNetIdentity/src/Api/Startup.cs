@@ -1,6 +1,8 @@
 ﻿// Copyright (c) Brock Allen & Dominick Baier. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -14,14 +16,22 @@ namespace Api
                 .AddAuthorization()
                 .AddJsonFormatters();
 
-            services.AddAuthentication("Bearer")
-                .AddIdentityServerAuthentication(options =>
-                {
-                    options.Authority = "http://localhost:5000";
-                    options.RequireHttpsMetadata = false;
+            services
+            .AddAuthentication(GetAuthenticationOptions)
+            .AddJwtBearer(GetJwtBearerOptions);
+        }
 
-                    options.ApiName = "api1";
-                });
+        private void GetAuthenticationOptions(AuthenticationOptions options)
+        {
+            options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+            options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+        }
+
+        private void GetJwtBearerOptions(JwtBearerOptions options)
+        {
+            options.Authority = "http://localhost:5001/";
+            options.Audience = "api1";
+            options.RequireHttpsMetadata = false;
         }
 
         public void Configure(IApplicationBuilder app)
