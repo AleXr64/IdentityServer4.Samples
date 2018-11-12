@@ -29,9 +29,28 @@ namespace IdentityServerWithAspNetIdentity
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlite(Configuration.GetConnectionString("DefaultConnection")));
 
-            services.AddIdentity<ApplicationUser, IdentityRole>()
-                .AddEntityFrameworkStores<ApplicationDbContext>()
-                .AddDefaultTokenProviders();
+            services.AddIdentityCore<ApplicationUser>(options => { })
+                            .AddRoles<IdentityRole>()
+                            .AddEntityFrameworkStores<ApplicationDbContext>()
+                            .AddSignInManager<SignInManager<ApplicationUser>>()
+                            .AddDefaultTokenProviders();
+
+            services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = IdentityConstants.ApplicationScheme;
+                options.DefaultChallengeScheme = IdentityConstants.ApplicationScheme;
+                options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
+            }).AddCookie(IdentityConstants.ApplicationScheme, options =>
+            {
+                options.Cookie.HttpOnly = true;
+                options.ExpireTimeSpan = TimeSpan.FromHours(1);
+                options.LoginPath = "/Account/Signin";
+                options.LogoutPath = "/Account/Signout";
+            }).AddCookie(IdentityConstants.ExternalScheme, o =>
+            {
+                o.Cookie.Name = IdentityConstants.ExternalScheme;
+                o.ExpireTimeSpan = TimeSpan.FromMinutes(5.0);
+            });
 
             services.AddMvc();
 
@@ -61,13 +80,6 @@ namespace IdentityServerWithAspNetIdentity
             {
                 throw new Exception("need to configure key material");
             }
-
-            services.AddAuthentication()
-              .AddGoogle(options =>
-              {
-                  options.ClientId = "708996912208-9m4dkjb5hscn7cjrn5u0r4tbgkbj1fko.apps.googleusercontent.com";
-                  options.ClientSecret = "wdfPY6t8H8cecgjlxud__4Gh";
-              });
         }
 
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
